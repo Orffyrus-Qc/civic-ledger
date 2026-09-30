@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+data/
+cache/*.zip
+cache/*.xlsx
+.idea/
+.vscode/
+launcher/bin/
+launcher/obj/
+launcher/publish/
+*.pdb
+.DS_Store

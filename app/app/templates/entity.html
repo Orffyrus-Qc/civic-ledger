@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ entity.name }} · Canadian Political Leak</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1><a href="/" data-i18n="brand">Canadian Political Leak</a></h1>
+        <p class="tag">{{ entity.name }}</p>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="lang-switch" role="group" data-i18n-aria="lang_label" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="fr">FR</button>
+      </div>
+    </div>
+  </header>
+  <article class="detail">
+    <p class="pill">{{ entity.kind }} · {{ entity.slug }}</p>
+    <h2>{{ entity.name }}</h2>
+    <h3 data-i18n="timeline">Timeline</h3>
+    {% if entity.findings %}
+      <ul class="timeline">
+        {% for f in entity.findings %}
+          <li>
+            <span class="muted">{{ f.source_date or f.created_at }}</span>
+            <a href="/finding/{{ f.id }}">{{ f.title }}</a>
+            <span class="cat {{ f.category }}">{{ f.category }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted" data-i18n="entity_empty">No linked findings yet.</p>
+    {% endif %}
+    {% if entity.money_events %}
+      <h3 data-i18n="money">Money</h3>
+      <ul>
+        {% for m in entity.money_events %}
+          <li>{{ m.event_date or '' }} · {{ m.role }} · {{ m.actor }} → {{ m.counterpart or '' }} · {{ m.amount or '' }} {{ m.currency }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <p><a href="/" data-i18n="back">← Back to list</a></p>
+  </article>
+  <script src="/static/i18n.js"></script>
+  <script>
+    applyI18n();
+    bindLangSwitch(() => location.reload());
+  </script>
+</body>
+</html>

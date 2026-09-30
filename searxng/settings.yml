@@ -1,0 +1,57 @@
+# Isolated SearXNG for Canadian Political Leak (JSON API, local only)
+use_default_settings: true
+
+general:
+  instance_name: "CPL Search"
+  enable_metrics: false
+
+server:
+  secret_key: "change-this-local-searxng-secret-key-32chars"
+  limiter: false
+  image_proxy: false
+  public_instance: false
+  method: "GET"
+
+search:
+  safe_search: 1
+  autocomplete: ""
+  default_lang: "en-CA"
+  formats:
+    - html
+    - json
+
+ui:
+  static_use_hash: true
+  default_theme: simple
+  query_in_title: false
+
+outgoing:
+  request_timeout: 12.0
+  max_request_timeout: 20.0
+  pool_connections: 40
+  pool_maxsize: 16
+  useragent_suffix: "CPL-sandbox"
+
+engines:
+  - name: duckduckgo
+    disabled: true
+  - name: startpage
+    disabled: true
+  - name: mojeek
+    disabled: false
+  - name: wikipedia
+    disabled: false
+  - name: wikidata
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: duckduckgo news
+    disabled: false
+  - name: google news
+    disabled: false
+  - name: yahoo news
+    disabled: false

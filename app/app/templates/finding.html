@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ item.title }} · Canadian Political Leak</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1><a href="/" data-i18n="brand">Canadian Political Leak</a></h1>
+        <p class="tag"><span data-i18n="finding">Finding</span> #{{ item.id }}</p>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="lang-switch" role="group" data-i18n-aria="lang_label" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="fr">FR</button>
+      </div>
+    </div>
+  </header>
+  <article class="detail">
+    <p class="badges">
+      <span class="cat {{ item.category }}" data-label="cat">{{ item.category }}</span>
+      <span class="sev {{ item.severity }}" data-label="sev">{{ item.severity }}</span>
+      <span class="pill origin {{ item.origin or 'model' }}" data-label="origin">{{ item.origin or 'model' }}</span>
+      <span class="pill" data-label="status">{{ item.promise_status }}</span>
+      <span class="pill">{{ '%.0f'|format((item.confidence or 0) * 100) }}%</span>
+      <span class="pill"><span data-i18n="review">review</span>: <span data-label="review">{{ item.review_status or 'pending' }}</span></span>
+    </p>
+    <h2>{{ item.title }}</h2>
+    <p class="summary">{{ item.summary }}</p>
+    {% if item.claim %}<h3 data-i18n="claim">Claim / promise</h3><p>{{ item.claim }}</p>{% endif %}
+    {% if item.evidence %}<h3 data-i18n="evidence">What the sources show</h3><p>{{ item.evidence }}</p>{% endif %}
+    {% if item.entities %}
+      <h3 data-i18n="entities">Public entities</h3>
+      <p>
+        {% for e in item.entities %}
+          <a class="pill" href="/entity/{{ slugify(e) }}">{{ e }}</a>
+        {% endfor %}
+      </p>
+    {% endif %}
+    {% if item.money and item.money.amount %}
+      <h3 data-i18n="money">Money</h3>
+      <p>{{ item.money.amount }} {{ item.money.currency }}</p>
+    {% endif %}
+    {% if item.money_events %}
+      <ul>
+        {% for m in item.money_events %}
+          <li>{{ m.role }}: {{ m.actor }} {% if m.amount %}{{ m.amount }} {{ m.currency }}{% endif %} {{ m.event_date or '' }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if item.claims %}
+      <h3 data-i18n="matched">Matched promises</h3>
+      <ul>
+        {% for c in item.claims %}
+          <li>{{ c.status }} — {{ c.minister }}: {{ c.title }} (score {{ '%.2f'|format(c.score or 0) }})</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <h3 data-i18n="sources">Sources</h3>
+    <ul class="sources">
+      {% for s in item.sources %}
+        <li><a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.title or s.url }}</a> {% if s.kind %}<span class="pill">{{ s.kind }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    <p class="muted"><span data-i18n="source_date">Source date</span> {{ item.source_date or 'unknown' }} · <span data-i18n="captured">captured</span> {{ item.created_at }} · {{ model }}</p>
+    <p class="review-row">
+      <button type="button" class="scan" data-review="confirmed" data-id="{{ item.id }}" data-i18n="confirm">Confirm</button>
+      <button type="button" data-review="rejected" data-id="{{ item.id }}" data-i18n="reject">Reject</button>
+      <button type="button" data-review="pending" data-id="{{ item.id }}" data-i18n="reset">Reset</button>
+    </p>
+    <p><a href="/" data-i18n="back">← Back to list</a></p>
+  </article>
+  <script src="/static/i18n.js"></script>
+  <script>
+    applyI18n();
+    const cat = document.querySelector("[data-label=cat]");
+    if (cat) cat.textContent = labelCat(cat.textContent.trim());
+    const sev = document.querySelector("[data-label=sev]");
+    if (sev) sev.textContent = labelSev(sev.textContent.trim());
+    const origin = document.querySelector("[data-label=origin]");
+    if (origin) origin.textContent = labelOrigin(origin.textContent.trim());
+    const st = document.querySelector("[data-label=status]");
+    if (st) st.textContent = labelStatus(st.textContent.trim());
+    const rv = document.querySelector("[data-label=review]");
+    if (rv) rv.textContent = labelReview(rv.textContent.trim());
+    bindLangSwitch(() => location.reload());
+    document.querySelectorAll("[data-review]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        const status = btn.dataset.review;
+        await fetch(`/api/finding/${id}/review?status=${status}`, { method: "POST" });
+        location.reload();
+      });
+    });
+  </script>
+</body>
+</html>

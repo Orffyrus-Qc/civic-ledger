@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Canadian Political Leak</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1 data-i18n="brand">Canadian Political Leak</h1>
+        <p class="tag" data-i18n="tag">Public-source watchdog · follow the money · promises vs. record</p>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="pill" data-i18n="sandbox">sandbox</span>
+      <span class="pill" data-i18n="no_dox">no doxing</span>
+      <span class="pill">{{ model }}</span>
+      <label class="country-wrap">
+        <span class="muted" data-i18n="country_label">Country</span>
+        <select id="country-sel" aria-label="Country"></select>
+      </label>
+      <div class="lang-switch" role="group" data-i18n-aria="lang_label" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="fr">FR</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="disclaimer" data-i18n="disclaimer">
+    Tracks public officials, parties, lobbyists, contracts, and published reporting.
+    Private addresses, personal phones, SINs, and people-search dumps are blocked.
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="findings" class="on" data-i18n="tab_findings">Findings</button>
+    <button data-tab="money" data-i18n="tab_money">Money</button>
+    <button data-tab="promises" data-i18n="tab_promises">Promises</button>
+    <button data-tab="entities" data-i18n="tab_entities">Entities</button>
+    <button data-tab="sources" data-i18n="tab_sources">Sources tray</button>
+    <button data-tab="scans" data-i18n="tab_scans">Scans</button>
+  </nav>
+
+  <section class="toolbar">
+    <div class="filters" id="filters">
+      <button data-cat="all" class="on" data-i18n="cat_all">All</button>
+      <button data-cat="finance" data-i18n="cat_finance">Finance</button>
+      <button data-cat="promise" data-i18n="cat_promise">Promises</button>
+      <button data-cat="contradiction" data-i18n="cat_contradiction">Contradictions</button>
+      <button data-cat="lobbying" data-i18n="cat_lobbying">Lobbying</button>
+      <button data-cat="contract" data-i18n="cat_contract">Contracts</button>
+      <button data-cat="ethics" data-i18n="cat_ethics">Ethics</button>
+    </div>
+    <form id="search-form" class="search">
+      <input id="q" type="search" data-i18n-placeholder="search" placeholder="Filter or search the web…" autocomplete="off" />
+      <button type="submit" data-i18n="search_btn">Search</button>
+    </form>
+    <label class="tog"><input type="checkbox" id="hide-low" checked /> <span data-i18n="hide_low">Hide low confidence</span></label>
+    <label class="tog"><input type="checkbox" id="hide-unverified" checked /> <span data-i18n="hide_unverified">Hide unverified</span></label>
+    <select id="sort">
+      <option value="date" data-i18n="sort_date">Source date</option>
+      <option value="money" data-i18n="sort_money">Money</option>
+      <option value="confidence" data-i18n="sort_conf">Confidence</option>
+    </select>
+    <button id="scan-btn" class="scan" data-i18n="scan">Run scan now</button>
+  </section>
+
+  <section class="stats" id="stats">
+    <div><em id="stat-findings">{{ stats.findings }}</em> <span data-i18n="stat_findings">findings</span></div>
+    <div><em id="stat-hits">{{ stats.hits }}</em> <span data-i18n="stat_sources">sources</span></div>
+    <div><em id="stat-money">{{ stats.money_events or 0 }}</em> <span data-i18n="stat_money">money rows</span></div>
+    <div><em id="stat-claims">{{ stats.claims or 0 }}</em> <span data-i18n="stat_claims">promises</span></div>
+    <div><em id="stat-running">{{ 'running' if stats.running else 'idle' }}</em></div>
+  </section>
+
+  <main>
+    <div id="status" class="status"></div>
+    <div id="list" class="list"></div>
+  </main>
+
+  <footer data-i18n="footer">
+    Local Docker sandbox · SearXNG :8888 · UI :8088 · GPU 1 / Qwen3 8B · extracted tables ≠ model prose
+  </footer>
+  <script src="/static/i18n.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
