@@ -1,1 +1,1 @@
-"""Canadian Political Leak — public-source watchdog."""
+"""Civic Ledger — public-source watchdog."""

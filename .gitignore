@@ -13,5 +13,10 @@ cache/*.xlsx
 launcher/bin/
 launcher/obj/
 launcher/publish/
+installer/payload/
+installer/launcher-pub/
+installer/bin/
+installer/obj/
+*.msi
 *.pdb
 .DS_Store

@@ -5,8 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWindowsForms>true</UseWindowsForms>
-    <ApplicationTitle>Canadian Political Leak</ApplicationTitle>
-    <AssemblyName>CplLauncher</AssemblyName>
-    <RootNamespace>CplLauncher</RootNamespace>
+    <ApplicationTitle>Civic Ledger</ApplicationTitle>
+    <AssemblyName>CivicLedger</AssemblyName>
+    <RootNamespace>CivicLedger</RootNamespace>
   </PropertyGroup>
 </Project>

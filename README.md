@@ -1,17 +1,15 @@
-# Canadian Political Leak
+# Civic Ledger
 
-Sandbox watchdog for **public** Canadian political finance, lobbying, contracts, campaign promises, and contradictions.
+Sandbox watchdog for **public** political finance, lobbying, contracts, campaign promises, and contradictions. Canada has structured feeds (Open Canada, OpenParliament, lobbying dump, mandate scoreboard); other countries use official-domain search.
 
 It does **not** dox private people. Home addresses, personal phones, SINs, people-search sites, and family private data are blocked.
 
-## What it does now
+## What it does
 
-- Pulls **structured public tables**: Open Canada contracts datastore, the official lobbying communications dump (live site is Cloudflare-blocked; cached + Internet Archive copy), Carney’s May 2025 mandate letter plus PCO 2015/2021 workbooks, OpenParliament bills/votes.
+- Pulls **structured public tables** (Canada): Open Canada contracts, lobbying communications dump, Carney 2025 mandate letter, OpenParliament bills/votes.
 - Auto-searches the web through **SearXNG** (English + French, rotating queries).
-- Dedups stories, hides junk/low-confidence/unverified by default, stamps **source dates**.
-- Joins **vendors** that also appear as **lobbyists**.
-- Matches findings to ingested **promise** rows.
-- Local **Qwen3 8B** (~5.7 GB on GPU 1) analyzes one story at a time. Extracted table rows are labelled separately from model prose.
+- Country switch, bilingual search, promise scoreboard, vendor ↔ lobbyist joins.
+- Local **Qwen3 8B** analyzes one story at a time. Extracted table rows are labelled separately from model prose.
 - Human **confirm / reject**. SQLite backups under `/data/backups`.
 
 ## Stack
@@ -31,6 +29,8 @@ Needs Docker Desktop with GPU access, then:
 ```
 
 Or the C# launcher: `dotnet run --project launcher -c Release` (Start / Stop only).
+
+Windows installer: `installer\build.ps1` produces `CivicLedgerSetup.msi`.
 
 Open [http://127.0.0.1:8088](http://127.0.0.1:8088)
 

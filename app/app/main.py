@@ -61,7 +61,7 @@ async def lifespan(_app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Canadian Political Leak", docs_url=None, redoc_url=None, lifespan=lifespan)
+app = FastAPI(title="Civic Ledger", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(ROOT / "static")), name="static")
 
 

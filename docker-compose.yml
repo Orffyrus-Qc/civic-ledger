@@ -1,4 +1,4 @@
-# Canadian Political Leak — sandbox stack
+# Civic Ledger — sandbox stack
 # Internal network only. Host binds are 127.0.0.1.
 # LLM pinned to GPU 1 (RTX 3060) so GPU 0 video jobs stay untouched.
 

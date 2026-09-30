@@ -1,8 +1,8 @@
-# Isolated SearXNG for Canadian Political Leak (JSON API, local only)
+# Isolated SearXNG for Civic Ledger (JSON API, local only)
 use_default_settings: true
 
 general:
-  instance_name: "CPL Search"
+  instance_name: "Civic Ledger Search"
   enable_metrics: false
 
 server:

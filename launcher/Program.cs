@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace CplLauncher;
+namespace CivicLedger;
 
 static class Program
 {
@@ -32,7 +32,7 @@ sealed class MainForm : Form
     public MainForm()
     {
         _stackRoot = FindStackRoot();
-        Text = "Canadian Political Leak";
+        Text = "Civic Ledger";
         Width = 560;
         Height = 360;
         MinimumSize = new Size(480, 280);
@@ -175,9 +175,15 @@ sealed class MainForm : Form
             if (File.Exists(compose))
                 return dir.FullName;
         }
-        const string fallback = @"F:\canadian-political-leak";
-        if (File.Exists(Path.Combine(fallback, "docker-compose.yml")))
-            return fallback;
+        foreach (var fallback in new[]
+                 {
+                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Civic Ledger"),
+                     @"F:\canadian-political-leak",
+                 })
+        {
+            if (File.Exists(Path.Combine(fallback, "docker-compose.yml")))
+                return fallback;
+        }
         throw new DirectoryNotFoundException("docker-compose.yml not found.");
     }
 }

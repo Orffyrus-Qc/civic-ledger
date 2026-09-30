@@ -40,7 +40,7 @@ NUM_CTX = _env_int("OLLAMA_NUM_CTX", 6144)
 STALE_HOURS = _env_int("STALE_HOURS", 12)
 USER_AGENT = _env(
     "CPL_USER_AGENT",
-    "CanadianPoliticalLeak/1.0 (+local-sandbox; public-records research; no-dox)",
+    "CivicLedger/1.0 (+local-sandbox; public-records research; no-dox)",
 )
 PARLIAMENT_SESSION = _env("PARLIAMENT_SESSION", "45-1")
 CONTRACTS_RESOURCE_ID = _env(

@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
-Write-Host "Starting Canadian Political Leak sandbox..."
+Write-Host "Starting Civic Ledger sandbox..."
 docker compose up -d --build
 Write-Host ""
 Write-Host "UI:     http://127.0.0.1:8088"

@@ -1,6 +1,6 @@
 const I18N = {
   en: {
-    brand: "Canadian Political Leak",
+    brand: "Civic Ledger",
     tag: "Public-source watchdog · follow the money · promises vs. record",
     disclaimer:
       "Tracks public officials, parties, lobbyists, contracts, and published reporting. Private addresses, phones, SINs, and people-search dumps are blocked.",
@@ -114,7 +114,7 @@ const I18N = {
       "Local Docker sandbox · SearXNG :8888 · UI :8088 · GPU 1 / Qwen3 8B · extracted tables ≠ model prose",
   },
   fr: {
-    brand: "Fuite politique canadienne",
+    brand: "Civic Ledger",
     tag: "Chien de garde public · suivre l’argent · promesses vs. bilan",
     disclaimer:
       "Suit les élus, partis, lobbyistes, contrats et reportages publics. Adresses privées, téléphones, NAS et sites de recherche de personnes sont bloqués.",
