@@ -30,7 +30,13 @@ Needs Docker Desktop with GPU access, then:
 
 Or the C# launcher: `dotnet run --project launcher -c Release` (Start / Stop, pick an installed model, or confirm before downloading `qwen3:8b`).
 
-Windows installer: [installer/CivicLedgerSetup.msi](installer/CivicLedgerSetup.msi). Rebuild with `installer\build.ps1`.
+**New Windows PC:** run [installer/dist/CivicLedgerSetup.exe](installer/dist/CivicLedgerSetup.exe) with [installer/dist/CivicLedgerSetup.msi](installer/dist/CivicLedgerSetup.msi) in the same folder. The wizard explains and checks **WSL 2** (a major Windows feature Docker needs), **Docker Desktop**, and **Ollama**, then installs Civic Ledger. Reboot if Windows asks after WSL 2. Docker must be running before you click Start.
+
+**Uninstall:** Start menu → Uninstall Civic Ledger, or `CivicLedger.exe /uninstall`. Civic Ledger is selected by default. Docker, Ollama, and WSL 2 are optional and warned separately (WSL 2 requires typing `REMOVE`).
+
+> **Not tested yet.** The Windows installer (setup wizard + MSI) and the full uninstaller have not been verified on a clean PC. Use them at your own risk. Prefer keeping WSL 2 / Docker / Ollama unless you are sure you want those Windows components removed.
+
+Rebuild installers with `installer\build.ps1`.
 
 Open [http://127.0.0.1:8088](http://127.0.0.1:8088)
 

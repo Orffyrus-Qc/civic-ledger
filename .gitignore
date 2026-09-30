@@ -17,8 +17,13 @@ installer/payload/
 installer/launcher-pub/
 installer/bin/
 installer/obj/
+installer/setup/bin/
+installer/setup/obj/
+installer/setup-pub/
 *.msi
 !installer/CivicLedgerSetup.msi
+!installer/dist/*.msi
+!installer/dist/*.exe
 *.pdb
 .DS_Store
 .env

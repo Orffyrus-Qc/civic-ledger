@@ -3,7 +3,7 @@
   <Package
     Name="Civic Ledger"
     Manufacturer="Orffyrus"
-    Version="1.1.0"
+    Version="1.3.0"
     UpgradeCode="76211ce3-9564-41c1-9fa7-8c56c5058e99"
     Scope="perUser"
     Compressed="yes">
@@ -29,6 +29,14 @@
           Name="Civic Ledger"
           Description="Start or stop the local watchdog"
           Target="[INSTALLFOLDER]CivicLedger.exe"
+          WorkingDirectory="INSTALLFOLDER"
+          Directory="AppMenuFolder" />
+        <Shortcut
+          Id="UninstallShortcut"
+          Name="Uninstall Civic Ledger"
+          Description="Remove Civic Ledger and optionally Docker, Ollama, and WSL 2"
+          Target="[INSTALLFOLDER]CivicLedger.exe"
+          Arguments="/uninstall"
           WorkingDirectory="INSTALLFOLDER"
           Directory="AppMenuFolder" />
         <RemoveFolder Id="RemoveAppMenuFolder" Directory="AppMenuFolder" On="uninstall" />

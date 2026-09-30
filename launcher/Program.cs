@@ -6,10 +6,13 @@ namespace CivicLedger;
 static class Program
 {
     [STAThread]
-    static void Main()
+    static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm());
+        if (args.Any(a => a.Equals("/uninstall", StringComparison.OrdinalIgnoreCase)))
+            Application.Run(new UninstallForm());
+        else
+            Application.Run(new MainForm());
     }
 }
 
@@ -39,6 +42,7 @@ sealed class MainForm : Form
     };
     readonly Button _refreshModels = new() { Text = "Refresh", Width = 90, Height = 36 };
     readonly Button _downloadDefault = new() { Text = "Download default", Width = 150, Height = 36 };
+    readonly Button _uninstall = new() { Text = "Uninstall…", Width = 110, Height = 36 };
     readonly Label _status = new() { AutoSize = false, Height = 28, TextAlign = ContentAlignment.MiddleLeft };
     readonly TextBox _log = new()
     {
@@ -71,6 +75,7 @@ sealed class MainForm : Form
         };
         top.Controls.Add(_start);
         top.Controls.Add(_stop);
+        top.Controls.Add(_uninstall);
 
         var modelRow = new FlowLayoutPanel
         {
@@ -106,6 +111,11 @@ sealed class MainForm : Form
         _stop.Click += async (_, _) => await StopStack();
         _refreshModels.Click += async (_, _) => await RefreshModels();
         _downloadDefault.Click += async (_, _) => await DownloadDefault();
+        _uninstall.Click += (_, _) =>
+        {
+            using var f = new UninstallForm();
+            f.ShowDialog(this);
+        };
 
         Shown += async (_, _) =>
         {
@@ -117,6 +127,8 @@ sealed class MainForm : Form
 
     async Task StartStack()
     {
+        if (!await EnsurePrereqs())
+            return;
         SetBusy(true);
         _status.Text = "Starting…";
         try
@@ -197,6 +209,63 @@ sealed class MainForm : Form
         {
             SetBusy(false);
         }
+    }
+
+    async Task<bool> EnsurePrereqs()
+    {
+        var wsl = await Prereqs.DetectWsl();
+        if (wsl != WslState.Ready)
+        {
+            var ask = MessageBox.Show(
+                this,
+                Prereqs.WslExplanation + "\n\nWSL 2 status: " + Prereqs.WslStatusText(wsl)
+                + "\n\nEnable WSL 2 now? Windows will likely reboot.",
+                "WSL 2 required — large Windows change",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+            if (ask == DialogResult.Yes)
+                Prereqs.InstallWsl2();
+            return false;
+        }
+        if (!Prereqs.DockerDesktopInstalled())
+        {
+            var ask = MessageBox.Show(
+                this,
+                "Docker Desktop is required and is not installed.\n\nInstall Docker Desktop now?",
+                "Civic Ledger",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (ask == DialogResult.Yes)
+                await Prereqs.InstallDocker();
+            return false;
+        }
+        if (!await Prereqs.DockerEngineRunning())
+        {
+            var ask = MessageBox.Show(
+                this,
+                "Docker Desktop is installed but not running.\n\nStart Docker Desktop now?",
+                "Civic Ledger",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (ask == DialogResult.Yes)
+                Prereqs.StartDockerDesktop();
+            _status.Text = "Start Docker Desktop, wait until it is idle, then click Start again.";
+            return false;
+        }
+        if (!Prereqs.OllamaInstalled())
+        {
+            var ask = MessageBox.Show(
+                this,
+                "Ollama is required and is not installed.\n\nInstall Ollama now?",
+                "Civic Ledger",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (ask == DialogResult.Yes)
+                await Prereqs.InstallOllama();
+            return false;
+        }
+        return true;
     }
 
     async Task DownloadDefault()
@@ -356,6 +425,7 @@ sealed class MainForm : Form
         _models.Enabled = !busy;
         _refreshModels.Enabled = !busy;
         _downloadDefault.Enabled = !busy;
+        _uninstall.Enabled = !busy;
     }
 
     async Task RefreshStatus()

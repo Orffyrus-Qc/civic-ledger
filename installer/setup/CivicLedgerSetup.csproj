@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationTitle>Civic Ledger Setup</ApplicationTitle>
+    <AssemblyName>CivicLedgerSetup</AssemblyName>
+    <RootNamespace>CivicLedger</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\launcher\Prereqs.cs" Link="Prereqs.cs" />
+    <Compile Include="..\..\launcher\UninstallForm.cs" Link="UninstallForm.cs" />
+  </ItemGroup>
+</Project>
