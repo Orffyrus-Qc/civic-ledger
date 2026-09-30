@@ -28,7 +28,7 @@ Needs Docker Desktop with GPU access, then:
 .\scripts\start.ps1
 ```
 
-Or the C# launcher: `dotnet run --project launcher -c Release` (Start / Stop only).
+Or the C# launcher: `dotnet run --project launcher -c Release` (Start / Stop, pick an installed model, or confirm before downloading `qwen3:8b`).
 
 Windows installer: [installer/CivicLedgerSetup.msi](installer/CivicLedgerSetup.msi). Rebuild with `installer\build.ps1`.
 

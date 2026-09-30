@@ -76,6 +76,7 @@ services:
   llm-pull:
     image: docker.io/ollama/ollama:latest
     container_name: cpl-llm-pull
+    profiles: ["auto-pull"]
     depends_on:
       llm:
         condition: service_healthy
@@ -108,7 +109,7 @@ services:
       CPL_DB_PATH: /data/cpl.sqlite
       SEARXNG_URL: http://searxng:8080
       OLLAMA_URL: http://llm:11434
-      OLLAMA_MODEL: qwen3:8b
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
       SCAN_INTERVAL_MINUTES: "30"
       SCAN_ON_START: "0"
       PUBLIC_ONLY: "1"

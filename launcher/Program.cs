@@ -13,10 +13,32 @@ static class Program
     }
 }
 
+sealed class ModelChoice
+{
+    public required string Name { get; init; }
+    public required string Kind { get; init; } // installed | host | download
+    public override string ToString() => Kind switch
+    {
+        "installed" => Name + "  (installed)",
+        "host" => Name + "  (on this PC — copy download)",
+        _ => Name + "  (download default, ~5 GB)",
+    };
+}
+
 sealed class MainForm : Form
 {
-    readonly Button _start = new() { Text = "Start", Width = 140, Height = 40 };
-    readonly Button _stop = new() { Text = "Stop", Width = 140, Height = 40 };
+    const string DefaultModel = "qwen3:8b";
+
+    readonly Button _start = new() { Text = "Start", Width = 120, Height = 36 };
+    readonly Button _stop = new() { Text = "Stop", Width = 120, Height = 36 };
+    readonly ComboBox _models = new()
+    {
+        DropDownStyle = ComboBoxStyle.DropDownList,
+        Width = 280,
+        Height = 28,
+    };
+    readonly Button _refreshModels = new() { Text = "Refresh", Width = 90, Height = 36 };
+    readonly Button _downloadDefault = new() { Text = "Download default", Width = 150, Height = 36 };
     readonly Label _status = new() { AutoSize = false, Height = 28, TextAlign = ContentAlignment.MiddleLeft };
     readonly TextBox _log = new()
     {
@@ -33,9 +55,9 @@ sealed class MainForm : Form
     {
         _stackRoot = FindStackRoot();
         Text = "Civic Ledger";
-        Width = 560;
-        Height = 360;
-        MinimumSize = new Size(480, 280);
+        Width = 640;
+        Height = 420;
+        MinimumSize = new Size(560, 320);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.Sizable;
         Font = new Font("Segoe UI", 10f);
@@ -43,12 +65,30 @@ sealed class MainForm : Form
         var top = new FlowLayoutPanel
         {
             Dock = DockStyle.Top,
-            Height = 56,
-            Padding = new Padding(12, 10, 12, 6),
+            Height = 52,
+            Padding = new Padding(12, 8, 12, 4),
             WrapContents = false,
         };
         top.Controls.Add(_start);
         top.Controls.Add(_stop);
+
+        var modelRow = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 48,
+            Padding = new Padding(12, 4, 12, 4),
+            WrapContents = false,
+        };
+        var modelLabel = new Label
+        {
+            Text = "AI model",
+            AutoSize = true,
+            Padding = new Padding(0, 8, 8, 0),
+        };
+        modelRow.Controls.Add(modelLabel);
+        modelRow.Controls.Add(_models);
+        modelRow.Controls.Add(_refreshModels);
+        modelRow.Controls.Add(_downloadDefault);
 
         _status.Dock = DockStyle.Top;
         _status.Padding = new Padding(14, 0, 14, 0);
@@ -59,32 +99,74 @@ sealed class MainForm : Form
 
         Controls.Add(logHost);
         Controls.Add(_status);
+        Controls.Add(modelRow);
         Controls.Add(top);
 
-        _start.Click += async (_, _) => await RunCompose("up", "-d", "--build");
-        _stop.Click += async (_, _) => await RunCompose("down");
+        _start.Click += async (_, _) => await StartStack();
+        _stop.Click += async (_, _) => await StopStack();
+        _refreshModels.Click += async (_, _) => await RefreshModels();
+        _downloadDefault.Click += async (_, _) => await DownloadDefault();
 
-        Shown += async (_, _) => await RefreshStatus();
+        Shown += async (_, _) =>
+        {
+            SelectSavedModel();
+            await RefreshStatus();
+            await RefreshModels();
+        };
     }
 
-    async Task RunCompose(params string[] args)
+    async Task StartStack()
     {
-        _start.Enabled = false;
-        _stop.Enabled = false;
-        _status.Text = args[0] == "up" ? "Starting…" : "Stopping…";
-        _log.Clear();
+        SetBusy(true);
+        _status.Text = "Starting…";
         try
         {
-            var (code, output) = await Exec("docker", Prepend("compose", args));
-            AppendLog(output);
+            var choice = CurrentChoice();
+            WriteModelEnv(choice.Name);
+
+            var (code, _) = await Exec("docker", ["compose", "up", "-d", "--build", "searxng", "llm", "app"], log: true);
             if (code != 0)
             {
                 _status.Text = "Failed (exit " + code + "). Is Docker Desktop running?";
                 return;
             }
-            _status.Text = args[0] == "up"
-                ? "Running — http://127.0.0.1:8088"
-                : "Stopped.";
+
+            if (!await WaitForLlm())
+            {
+                _status.Text = "Ollama did not become ready.";
+                return;
+            }
+
+            var installed = await ListDockerModels();
+            if (!installed.Contains(choice.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var sizeHint = choice.Name == DefaultModel ? " (~5 GB)" : "";
+                var ok = MessageBox.Show(
+                    this,
+                    "Download " + choice.Name + sizeHint + " into Civic Ledger?\n\n"
+                    + "This is a separate copy from any model already on the host. "
+                    + "It can take several minutes. Choose No to start the UI without a model.",
+                    "Confirm model download",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button2);
+                if (ok != DialogResult.Yes)
+                {
+                    _status.Text = "Running without a model — http://127.0.0.1:8088";
+                    return;
+                }
+                _status.Text = "Downloading " + choice.Name + "…";
+                var pull = await Exec("docker", ["exec", "cpl-llm", "ollama", "pull", choice.Name], log: true);
+                if (pull.Code != 0)
+                {
+                    _status.Text = "Model download failed.";
+                    return;
+                }
+            }
+
+            await Exec("docker", ["compose", "up", "-d", "app"], log: true);
+            _status.Text = "Running — http://127.0.0.1:8088  (" + choice.Name + ")";
+            await RefreshModels();
         }
         catch (Exception ex)
         {
@@ -93,22 +175,203 @@ sealed class MainForm : Form
         }
         finally
         {
-            _start.Enabled = true;
-            _stop.Enabled = true;
-            await RefreshStatus();
+            SetBusy(false);
         }
+    }
+
+    async Task StopStack()
+    {
+        SetBusy(true);
+        _status.Text = "Stopping…";
+        try
+        {
+            var (code, _) = await Exec("docker", ["compose", "down"], log: true);
+            _status.Text = code == 0 ? "Stopped." : "Stop failed (exit " + code + ").";
+        }
+        catch (Exception ex)
+        {
+            AppendLog(ex.Message);
+            _status.Text = "Failed. Is Docker on PATH?";
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    async Task DownloadDefault()
+    {
+        SetBusy(true);
+        try
+        {
+            var ok = MessageBox.Show(
+                this,
+                "Download the default model " + DefaultModel + " (~5 GB) into Civic Ledger?\n\n"
+                + "This can take several minutes and uses GPU 1.",
+                "Confirm model download",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button2);
+            if (ok != DialogResult.Yes)
+                return;
+
+            WriteModelEnv(DefaultModel);
+            var up = await Exec("docker", ["compose", "up", "-d", "llm"], log: true);
+            if (up.Code != 0)
+            {
+                _status.Text = "Could not start Ollama.";
+                return;
+            }
+            if (!await WaitForLlm())
+            {
+                _status.Text = "Ollama did not become ready.";
+                return;
+            }
+            _status.Text = "Downloading " + DefaultModel + "…";
+            var pull = await Exec("docker", ["exec", "cpl-llm", "ollama", "pull", DefaultModel], log: true);
+            _status.Text = pull.Code == 0 ? "Default model ready: " + DefaultModel : "Download failed.";
+            await RefreshModels();
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    async Task RefreshModels()
+    {
+        var saved = ReadModelEnv() ?? (CurrentChoice()?.Name);
+        var docker = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try { docker.UnionWith(await ListDockerModels()); } catch { /* llm not up */ }
+        var host = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try { host.UnionWith(await ListHostModels()); } catch { /* no host ollama */ }
+
+        _models.Items.Clear();
+        foreach (var name in docker.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            _models.Items.Add(new ModelChoice { Name = name, Kind = "installed" });
+        foreach (var name in host.Except(docker).OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            _models.Items.Add(new ModelChoice { Name = name, Kind = "host" });
+        if (!_models.Items.Cast<ModelChoice>().Any(c => c.Name.Equals(DefaultModel, StringComparison.OrdinalIgnoreCase)))
+            _models.Items.Add(new ModelChoice { Name = DefaultModel, Kind = "download" });
+
+        if (_models.Items.Count == 0)
+            _models.Items.Add(new ModelChoice { Name = DefaultModel, Kind = "download" });
+
+        SelectByName(saved ?? DefaultModel);
+    }
+
+    void SelectSavedModel()
+    {
+        var saved = ReadModelEnv();
+        if (saved is null) return;
+        _models.Items.Clear();
+        _models.Items.Add(new ModelChoice { Name = saved, Kind = "installed" });
+        _models.SelectedIndex = 0;
+    }
+
+    void SelectByName(string name)
+    {
+        for (var i = 0; i < _models.Items.Count; i++)
+        {
+            if (_models.Items[i] is ModelChoice c && c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                _models.SelectedIndex = i;
+                return;
+            }
+        }
+        if (_models.Items.Count > 0)
+            _models.SelectedIndex = 0;
+    }
+
+    ModelChoice CurrentChoice()
+    {
+        if (_models.SelectedItem is ModelChoice c)
+            return c;
+        return new ModelChoice { Name = DefaultModel, Kind = "download" };
+    }
+
+    async Task<bool> WaitForLlm()
+    {
+        for (var i = 0; i < 30; i++)
+        {
+            var (code, _) = await Exec("docker", ["exec", "cpl-llm", "ollama", "list"], log: false);
+            if (code == 0) return true;
+            await Task.Delay(2000);
+        }
+        return false;
+    }
+
+    async Task<List<string>> ListDockerModels()
+    {
+        var (code, output) = await Exec("docker", ["exec", "cpl-llm", "ollama", "list"], log: false);
+        if (code != 0) return [];
+        return ParseOllamaList(output);
+    }
+
+    async Task<List<string>> ListHostModels()
+    {
+        var (code, output) = await Exec("ollama", ["list"], log: false);
+        if (code != 0) return [];
+        return ParseOllamaList(output);
+    }
+
+    static List<string> ParseOllamaList(string output)
+    {
+        var names = new List<string>();
+        foreach (var raw in output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var line = raw.Trim();
+            if (line.StartsWith("NAME", StringComparison.OrdinalIgnoreCase)) continue;
+            var name = line.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(name))
+                names.Add(name);
+        }
+        return names;
+    }
+
+    void WriteModelEnv(string model)
+    {
+        File.WriteAllText(Path.Combine(_stackRoot, ".env"), "OLLAMA_MODEL=" + model + Environment.NewLine);
+    }
+
+    string? ReadModelEnv()
+    {
+        var path = Path.Combine(_stackRoot, ".env");
+        if (!File.Exists(path)) return null;
+        foreach (var line in File.ReadAllLines(path))
+        {
+            if (line.StartsWith("OLLAMA_MODEL=", StringComparison.OrdinalIgnoreCase))
+            {
+                var v = line["OLLAMA_MODEL=".Length..].Trim();
+                if (v.Length > 0) return v;
+            }
+        }
+        return null;
+    }
+
+    void SetBusy(bool busy)
+    {
+        _start.Enabled = !busy;
+        _stop.Enabled = !busy;
+        _models.Enabled = !busy;
+        _refreshModels.Enabled = !busy;
+        _downloadDefault.Enabled = !busy;
     }
 
     async Task RefreshStatus()
     {
         try
         {
-            var (code, output) = await Exec("docker", ["compose", "ps", "-q"]);
-            if (code == 0 && output.Trim().Length > 0 && !_status.Text.StartsWith("Starting", StringComparison.Ordinal)
+            var (code, output) = await Exec("docker", ["compose", "ps", "-q"], log: false);
+            if (code == 0 && output.Trim().Length > 0
+                && !_status.Text.StartsWith("Starting", StringComparison.Ordinal)
                 && !_status.Text.StartsWith("Stopping", StringComparison.Ordinal)
-                && !_status.Text.StartsWith("Failed", StringComparison.Ordinal))
+                && !_status.Text.StartsWith("Failed", StringComparison.Ordinal)
+                && !_status.Text.StartsWith("Downloading", StringComparison.Ordinal))
             {
-                _status.Text = "Running — http://127.0.0.1:8088";
+                var model = ReadModelEnv();
+                _status.Text = "Running — http://127.0.0.1:8088"
+                    + (model is null ? "" : "  (" + model + ")");
             }
         }
         catch
@@ -117,7 +380,7 @@ sealed class MainForm : Form
         }
     }
 
-    async Task<(int Code, string Output)> Exec(string file, string[] args)
+    async Task<(int Code, string Output)> Exec(string file, string[] args, bool log)
     {
         var psi = new ProcessStartInfo
         {
@@ -133,18 +396,15 @@ sealed class MainForm : Form
 
         var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var buf = new StringBuilder();
-        proc.OutputDataReceived += (_, e) =>
+        void Handle(string? data)
         {
-            if (e.Data is null) return;
-            buf.AppendLine(e.Data);
-            BeginInvoke(() => AppendLog(e.Data));
-        };
-        proc.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data is null) return;
-            buf.AppendLine(e.Data);
-            BeginInvoke(() => AppendLog(e.Data));
-        };
+            if (data is null) return;
+            buf.AppendLine(data);
+            if (log)
+                BeginInvoke(() => AppendLog(data));
+        }
+        proc.OutputDataReceived += (_, e) => Handle(e.Data);
+        proc.ErrorDataReceived += (_, e) => Handle(e.Data);
         proc.Start();
         proc.BeginOutputReadLine();
         proc.BeginErrorReadLine();
@@ -156,14 +416,6 @@ sealed class MainForm : Form
     {
         if (string.IsNullOrWhiteSpace(line)) return;
         _log.AppendText(line.TrimEnd() + Environment.NewLine);
-    }
-
-    static string[] Prepend(string first, string[] rest)
-    {
-        var all = new string[rest.Length + 1];
-        all[0] = first;
-        Array.Copy(rest, 0, all, 1, rest.Length);
-        return all;
     }
 
     static string FindStackRoot()

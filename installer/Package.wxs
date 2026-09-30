@@ -1,14 +1,17 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package
     Name="Civic Ledger"
     Manufacturer="Orffyrus"
-    Version="1.0.0"
+    Version="1.1.0"
     UpgradeCode="76211ce3-9564-41c1-9fa7-8c56c5058e99"
     Scope="perUser"
     Compressed="yes">
     <SummaryInformation Description="Start and stop the Civic Ledger Docker stack." />
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
     <MediaTemplate EmbedCab="yes" />
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
 
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="INSTALLFOLDER" Name="Civic Ledger" />

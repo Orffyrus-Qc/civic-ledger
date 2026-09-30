@@ -21,3 +21,4 @@ installer/obj/
 !installer/CivicLedgerSetup.msi
 *.pdb
 .DS_Store
+.env

@@ -18,7 +18,7 @@ from .collectors import (
     collect_search,
     enrich,
 )
-from .llm import analyze_story, model_ready, pull_model
+from .llm import analyze_story, model_ready
 from .countries import normalize as norm_country, profile as country_profile
 from .util import looks_like_junk_title
 
@@ -34,13 +34,7 @@ async def ensure_model() -> str:
     ready, detail = await model_ready()
     if ready:
         return f"ready:{detail}"
-    log.info("pulling model (%s)", detail)
-    try:
-        await pull_model()
-    except Exception as exc:
-        return f"pull-failed:{exc}"
-    ready, detail = await model_ready()
-    return f"ready:{detail}" if ready else f"missing:{detail}"
+    return f"missing:{detail}"
 
 
 def _store_extracted(scan_id: int, raw: dict[str, Any], country: str = "CA") -> int | None:
