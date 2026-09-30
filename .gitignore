@@ -18,5 +18,6 @@ installer/launcher-pub/
 installer/bin/
 installer/obj/
 *.msi
+!installer/CivicLedgerSetup.msi
 *.pdb
 .DS_Store

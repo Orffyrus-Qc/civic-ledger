@@ -30,7 +30,7 @@ Needs Docker Desktop with GPU access, then:
 
 Or the C# launcher: `dotnet run --project launcher -c Release` (Start / Stop only).
 
-Windows installer: `installer\build.ps1` produces `CivicLedgerSetup.msi`.
+Windows installer: [installer/CivicLedgerSetup.msi](installer/CivicLedgerSetup.msi). Rebuild with `installer\build.ps1`.
 
 Open [http://127.0.0.1:8088](http://127.0.0.1:8088)
 
